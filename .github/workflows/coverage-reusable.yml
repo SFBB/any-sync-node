@@ -1,4 +1,4 @@
-name: Coverage
+name: reusable coverage
 
 on:
   workflow_call:
