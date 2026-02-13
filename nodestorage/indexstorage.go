@@ -17,12 +17,24 @@ import (
 
 type SpaceStatus int
 
+type SpaceStatusEntry struct {
+	SpaceId                 string
+	Status                  SpaceStatus
+	Error                   string
+	NewHash                 string
+	OldHash                 string
+	LastAccess              time.Time
+	ArchiveSizeCompressed   int64
+	ArchiveSizeUncompressed int64
+}
+
 const (
 	SpaceStatusOk SpaceStatus = iota
 	SpaceStatusRemove
 	SpaceStatusRemovePrepare
 	SpaceStatusArchived
 	SpaceStatusError
+	SpaceStatusNotResponsible
 )
 
 var (
@@ -55,6 +67,7 @@ type IndexStorage interface {
 	UpdateHashes(ctx context.Context, updateFunc func(spaceId, newHash, oldHash string) (newNewHash, newOldHash string, shouldUpdate bool)) (err error)
 	SetSpaceStatus(ctx context.Context, spaceId string, status SpaceStatus, recId string) (err error)
 	SpaceStatus(ctx context.Context, spaceId string) (status SpaceStatus, err error)
+	SpaceStatusEntry(ctx context.Context, spaceId string) (entry SpaceStatusEntry, err error)
 	MarkArchived(ctx context.Context, spaceId string, compressedSize, uncompressedSize int64) (err error)
 	MarkError(ctx context.Context, spaceId string, errString string) (err error)
 	DeletionLogId(ctx context.Context) (id string, err error)
@@ -149,6 +162,25 @@ func (d *indexStorage) SpaceStatus(ctx context.Context, spaceId string) (status 
 		}
 	}
 	return SpaceStatus(doc.Value().GetInt(statusKey)), nil
+}
+
+func (d *indexStorage) SpaceStatusEntry(ctx context.Context, spaceId string) (entry SpaceStatusEntry, err error) {
+	doc, err := d.spaceColl.FindId(ctx, spaceId)
+	if err != nil {
+		return entry, err
+	}
+	v := doc.Value()
+	entry = SpaceStatusEntry{
+		SpaceId:                 spaceId,
+		Status:                  SpaceStatus(v.GetInt(statusKey)),
+		Error:                   v.GetString(errorKey),
+		NewHash:                 v.GetString(newHashKey),
+		OldHash:                 v.GetString(oldHashKey),
+		LastAccess:              time.Unix(int64(v.GetInt(lastAccessKey)), 0),
+		ArchiveSizeCompressed:   int64(v.GetInt(archiveSizeCompressedKey)),
+		ArchiveSizeUncompressed: int64(v.GetInt(archiveSizeUncompressedKey)),
+	}
+	return entry, nil
 }
 
 func (d *indexStorage) SetSpaceStatus(ctx context.Context, spaceId string, status SpaceStatus, recId string) (err error) {
