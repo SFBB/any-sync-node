@@ -11,6 +11,7 @@ import (
 	"github.com/anyproto/any-sync/net/rpc"
 	"github.com/anyproto/any-sync/net/rpc/debugserver"
 	"github.com/anyproto/any-sync/net/rpc/limiter"
+	"github.com/anyproto/any-sync/net/secureservice"
 	"github.com/anyproto/any-sync/net/streampool"
 	"github.com/anyproto/any-sync/net/transport/quic"
 	"github.com/anyproto/any-sync/net/transport/yamux"
@@ -55,6 +56,7 @@ type Config struct {
 	Quic                     quic.Config            `yaml:"quic"`
 	S3Store                  archivestore.Config    `yaml:"s3Store"`
 	Archive                  archive.Config         `yaml:"archive"`
+	Secure                   secureservice.Config   `yaml:"secure"`
 }
 
 func (c Config) Init(a *app.App) (err error) {
@@ -135,4 +137,8 @@ func (c Config) GetS3Store() archivestore.Config {
 
 func (c Config) GetArchive() archive.Config {
 	return c.Archive
+}
+
+func (c Config) GetSecureService() secureservice.Config {
+	return c.Secure
 }
