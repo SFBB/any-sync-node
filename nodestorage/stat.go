@@ -145,6 +145,9 @@ func calculateStatsPerObject(stats *ObjectSpaceStats) {
 }
 
 func calcMedian(sortedLengths []int) (median float64) {
+	if len(sortedLengths) == 0 {
+		return 0
+	}
 	mid := len(sortedLengths) / 2
 	if len(sortedLengths)%2 == 0 {
 		median = float64(sortedLengths[mid-1]+sortedLengths[mid]) / 2.0
